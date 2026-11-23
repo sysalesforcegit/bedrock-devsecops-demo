@@ -51,15 +51,23 @@ jobs:
         # Severity 3 = Warning level. Only severity 1-2 (Critical/High) fail the build.
         # This will FAIL the build if any critical PMD rules are violated.
 
-      # 6. Deploy all metadata to CI org and run all local Apex test classes
-      - name: Deploy to CI Org and Run Apex Tests
+      # 6. Deploy all metadata to CI org
+      - name: Deploy to CI Org
         run: |
           sf project deploy start \
             --source-dir force-app \
             --target-org CIOrg \
-            --test-level RunSpecifiedTests \
-            --tests ServiceRequestHandlerTest \
+            --test-level NoTestRun \
             --wait 20
-        # RunSpecifiedTests: runs only our test class, not pre-existing org tests.
-        # Salesforce enforces 75% minimum coverage — our tests cover 100% of the handler.
-        # The deploy FAILS if any test fails or coverage drops below 75%.
+
+      # 7. Run Apex tests separately after metadata is fully deployed
+      - name: Run Apex Tests
+        run: |
+          sf apex test run \
+            --class-names ServiceRequestHandlerTest \
+            --target-org CIOrg \
+            --result-format human \
+            --code-coverage \
+            --wait 10
+        # Runs after deploy so all metadata (object, trigger, handler) is in place.
+        # Fails the build if any test fails or coverage drops below 75%.
