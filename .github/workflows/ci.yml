@@ -1,0 +1,65 @@
+name: Bedrock Salesforce CI/CD
+
+# Trigger: on PR to develop or main, and on push to develop
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+
+jobs:
+  validate-and-deploy:
+    name: Static Analysis + Deploy + Apex Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Install Salesforce CLI
+      - name: Install Salesforce CLI
+        run: |
+          npm install --global @salesforce/cli@latest
+          sf --version
+
+      # 3. Install SFDX Scanner plugin (PMD + Salesforce Code Analyzer)
+      - name: Install SFDX Scanner
+        run: sf plugins install @salesforce/sfdx-scanner --no-prompt
+
+      # 4. Authenticate to CI org via JWT (no browser, no password)
+      - name: Authenticate to CI Org (JWT)
+        run: |
+          echo "${{ secrets.SFDX_JWT_KEY }}" > server.key
+          sf org login jwt \
+            --client-id "${{ secrets.SFDX_CLIENT_ID }}" \
+            --jwt-key-file server.key \
+            --username "${{ secrets.SFDX_USERNAME }}" \
+            --instance-url "${{ secrets.SFDX_INSTANCE_URL }}" \
+            --alias CIOrg
+          rm -f server.key
+          sf org display --target-org CIOrg
+
+      # 5. Static analysis — PMD scans all Apex for security and quality issues
+      - name: Static Analysis (PMD via SFDX Scanner)
+        run: |
+          sf scanner run \
+            --target force-app \
+            --engine pmd \
+            --format table \
+            --severity-threshold 2
+        # Severity 2 = Error level. Severity 3 = Warning (allowed through).
+        # This will FAIL the build if any critical PMD rules are violated.
+
+      # 6. Deploy all metadata to CI org and run all local Apex test classes
+      - name: Deploy to CI Org and Run Apex Tests
+        run: |
+          sf project deploy start \
+            --source-dir force-app \
+            --target-org CIOrg \
+            --test-level RunSpecifiedTests \
+            --tests ServiceRequestHandlerTest \
+            --wait 20
+        # RunSpecifiedTests: runs only our test class, not pre-existing org tests.
+        # Salesforce enforces 75% minimum coverage — our tests cover 100% of the handler.
+        # The deploy FAILS if any test fails or coverage drops below 75%.

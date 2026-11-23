@@ -1,0 +1,21 @@
+# SFDX
+.sfdx/
+.sf/
+
+# VS Code
+.vscode/settings.json
+
+# NEVER commit private keys
+*.key
+*.pem
+server.key
+
+# CI output
+deploy-results/
+coverage/
+
+# macOS
+.DS_Store
+
+# Node (if any local tooling added later)
+node_modules/

@@ -1,0 +1,8 @@
+# .forceignore v2
+# Patterns listed here are ignored by push/pull/retrieve/deploy
+
+.DS_Store
+*.bak
+deploy-results/
+**/jsconfig.json
+**/.eslintrc.json
