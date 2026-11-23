@@ -1,0 +1,24 @@
+# CODEOWNERS — Bedrock Enterprises Monorepo
+# Each SI team has write access to their own folder only.
+# Bedrock Tech Lead review is required for all merges to develop and main.
+
+# Shared Salesforce components — Bedrock Tech Lead approval required for any change
+/common/                @bedrock-tech-lead
+
+# OmniStudio DataPacks — all SIs contribute; Bedrock Tech Lead must approve
+# Changes here affect OmniScripts, DataRaptors, FlexCards across all projects
+/omnistudio/            @si-partner-a @si-partner-b @si-partner-c @bedrock-tech-lead
+
+# Project 1 — Healthcare (SI Partner A)
+# Covers force-app/ in this demo repo (full monorepo: would be /project-1/)
+/force-app/             @si-partner-a @bedrock-tech-lead
+
+# Project 2 — Financial (SI Partner B)
+/project-2/             @si-partner-b @bedrock-tech-lead
+
+# Project 3 — Separate org (SI Partner C)
+/project-3/             @si-partner-c @bedrock-tech-lead
+
+# CI/CD pipeline and governance — Bedrock Tech Lead only
+# No SI can modify the pipeline without Tech Lead approval
+/.github/               @bedrock-tech-lead

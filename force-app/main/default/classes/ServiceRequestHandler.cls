@@ -1,5 +1,12 @@
+/**
+ * @description Handles business logic for the Service_Request__c object.
+ */
 public with sharing class ServiceRequestHandler {
 
+    /**
+     * @description Sets default priority and status on insert or update.
+     * @param records The list of Service_Request__c records being processed.
+     */
     public static void handleBeforeInsertUpdate(List<Service_Request__c> records) {
         for (Service_Request__c sr : records) {
             setDefaultPriority(sr);
@@ -18,7 +25,6 @@ public with sharing class ServiceRequestHandler {
             }
         }
     }
-
     private static void setDefaultStatus(Service_Request__c sr) {
         if (String.isBlank(sr.Status__c)) {
             sr.Status__c = 'New';

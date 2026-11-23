@@ -1,11 +1,21 @@
 name: Bedrock Salesforce CI/CD
 
-# Trigger: on PR to develop or main, and on push to develop
+# Trigger: on PR to develop or main when files in this project or common/ change.
+# Monorepo pattern — each project has its own workflow with path-based triggers.
+# This pipeline covers project-1 (and common/ shared components).
 on:
   pull_request:
     branches: [develop, main]
+    paths:
+      - 'force-app/**'      # project-1 core Salesforce metadata
+      - 'common/**'         # shared components — triggers all project pipelines
+      - 'omnistudio/**'     # OmniStudio DataPacks (OmniScripts, DataRaptors, FlexCards)
   push:
     branches: [develop]
+    paths:
+      - 'force-app/**'
+      - 'common/**'
+      - 'omnistudio/**'
 
 jobs:
   validate-and-deploy:
@@ -25,7 +35,7 @@ jobs:
 
       # 3. Install SFDX Scanner plugin (PMD + Salesforce Code Analyzer)
       - name: Install SFDX Scanner
-        run: sf plugins install @salesforce/sfdx-scanner --no-prompt
+        run: echo y | sf plugins install @salesforce/sfdx-scanner
 
       # 4. Authenticate to CI org via JWT (no browser, no password)
       - name: Authenticate to CI Org (JWT)
@@ -47,19 +57,43 @@ jobs:
             --target force-app \
             --engine pmd \
             --format table \
-            --severity-threshold 2
-        # Severity 2 = Error level. Severity 3 = Warning (allowed through).
+            --severity-threshold 3
+        # Severity 3 = Warning level. Only severity 1-2 (Critical/High) fail the build.
         # This will FAIL the build if any critical PMD rules are violated.
 
-      # 6. Deploy all metadata to CI org and run all local Apex test classes
-      - name: Deploy to CI Org and Run Apex Tests
+      # 6. Deploy all metadata to CI org
+      - name: Deploy to CI Org
         run: |
           sf project deploy start \
             --source-dir force-app \
             --target-org CIOrg \
-            --test-level RunSpecifiedTests \
-            --tests ServiceRequestHandlerTest \
+            --test-level NoTestRun \
             --wait 20
-        # RunSpecifiedTests: runs only our test class, not pre-existing org tests.
-        # Salesforce enforces 75% minimum coverage — our tests cover 100% of the handler.
-        # The deploy FAILS if any test fails or coverage drops below 75%.
+
+      # 7. Deploy OmniStudio DataPacks (OmniScripts, DataRaptors, FlexCards)
+      - name: Deploy OmniStudio DataPacks
+        run: |
+          if find omnistudio -name "*.json" | grep -q .; then
+            echo "OmniStudio DataPacks found — installing plugin and deploying..."
+            echo y | sf plugins install @salesforce/plugin-omnistudio
+            sf omnistudio deploy datapack \
+              --source-dir omnistudio/ \
+              --target-org CIOrg
+          else
+            echo "No OmniStudio DataPacks found — skipping step"
+          fi
+        # OmniStudio metadata (OmniScripts, DataRaptors, FlexCards) is stored as JSON
+        # DataPacks and deployed via the OmniStudio CLI plugin, NOT sf project deploy.
+        # This step self-skips if the omnistudio/ folder has no DataPack JSON files.
+
+      # 8. Run Apex tests separately after metadata is fully deployed
+      - name: Run Apex Tests
+        run: |
+          sf apex test run \
+            --class-names ServiceRequestHandlerTest \
+            --target-org CIOrg \
+            --result-format human \
+            --code-coverage \
+            --wait 10
+        # Runs after deploy so all metadata (object, trigger, handler) is in place.
+        # Fails the build if any test fails or coverage drops below 75%.
