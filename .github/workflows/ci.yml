@@ -25,7 +25,7 @@ jobs:
 
       # 3. Install SFDX Scanner plugin (PMD + Salesforce Code Analyzer)
       - name: Install SFDX Scanner
-        run: sf plugins install @salesforce/sfdx-scanner --no-prompt
+        run: echo y | sf plugins install @salesforce/sfdx-scanner
 
       # 4. Authenticate to CI org via JWT (no browser, no password)
       - name: Authenticate to CI Org (JWT)
@@ -47,8 +47,8 @@ jobs:
             --target force-app \
             --engine pmd \
             --format table \
-            --severity-threshold 2
-        # Severity 2 = Error level. Severity 3 = Warning (allowed through).
+            --severity-threshold 3
+        # Severity 3 = Warning level. Only severity 1-2 (Critical/High) fail the build.
         # This will FAIL the build if any critical PMD rules are violated.
 
       # 6. Deploy all metadata to CI org and run all local Apex test classes
