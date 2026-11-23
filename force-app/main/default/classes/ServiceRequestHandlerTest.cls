@@ -70,7 +70,7 @@ private class ServiceRequestHandlerTest {
 
         // Confirm auto-assigned
         Service_Request__c inserted = [SELECT Priority__c FROM Service_Request__c WHERE Id = :sr.Id];
-        System.assertEquals('High', inserted.Priority__c);
+        System.assertEquals('High', inserted.Priority__c, 'Priority should be High after insert');
 
         // Update the subject only — priority should stay High
         inserted.Subject__c = 'Updated subject';
