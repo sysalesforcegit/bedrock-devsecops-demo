@@ -1,11 +1,21 @@
 name: Bedrock Salesforce CI/CD
 
-# Trigger: on PR to develop or main, and on push to develop
+# Trigger: on PR to develop or main when files in this project or common/ change.
+# Monorepo pattern — each project has its own workflow with path-based triggers.
+# This pipeline covers project-1 (and common/ shared components).
 on:
   pull_request:
     branches: [develop, main]
+    paths:
+      - 'force-app/**'      # project-1 core Salesforce metadata
+      - 'common/**'         # shared components — triggers all project pipelines
+      - 'omnistudio/**'     # OmniStudio DataPacks (OmniScripts, DataRaptors, FlexCards)
   push:
     branches: [develop]
+    paths:
+      - 'force-app/**'
+      - 'common/**'
+      - 'omnistudio/**'
 
 jobs:
   validate-and-deploy:
@@ -60,7 +70,23 @@ jobs:
             --test-level NoTestRun \
             --wait 20
 
-      # 7. Run Apex tests separately after metadata is fully deployed
+      # 7. Deploy OmniStudio DataPacks (OmniScripts, DataRaptors, FlexCards)
+      - name: Deploy OmniStudio DataPacks
+        run: |
+          if find omnistudio -name "*.json" | grep -q .; then
+            echo "OmniStudio DataPacks found — installing plugin and deploying..."
+            echo y | sf plugins install @salesforce/plugin-omnistudio
+            sf omnistudio deploy datapack \
+              --source-dir omnistudio/ \
+              --target-org CIOrg
+          else
+            echo "No OmniStudio DataPacks found — skipping step"
+          fi
+        # OmniStudio metadata (OmniScripts, DataRaptors, FlexCards) is stored as JSON
+        # DataPacks and deployed via the OmniStudio CLI plugin, NOT sf project deploy.
+        # This step self-skips if the omnistudio/ folder has no DataPack JSON files.
+
+      # 8. Run Apex tests separately after metadata is fully deployed
       - name: Run Apex Tests
         run: |
           sf apex test run \

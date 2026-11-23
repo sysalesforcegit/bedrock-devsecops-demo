@@ -2,7 +2,17 @@
   "packageDirectories": [
     {
       "path": "force-app",
-      "default": true
+      "default": true,
+      "package": "project-1",
+      "versionName": "Initial",
+      "versionNumber": "1.0.0.NEXT"
+    },
+    {
+      "path": "common",
+      "default": false,
+      "package": "common-components",
+      "versionName": "Initial",
+      "versionNumber": "1.0.0.NEXT"
     }
   ],
   "name": "bedrock-devsecops-demo",
