@@ -18,7 +18,6 @@ public with sharing class ServiceRequestHandler {
             }
         }
     }
-
     private static void setDefaultStatus(Service_Request__c sr) {
         if (String.isBlank(sr.Status__c)) {
             sr.Status__c = 'New';
