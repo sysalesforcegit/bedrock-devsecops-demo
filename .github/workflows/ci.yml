@@ -9,7 +9,7 @@ on:
     paths:
       - 'force-app/**'      # project-1 core Salesforce metadata
       - 'common/**'         # shared components — triggers all project pipelines
-      - 'omnistudio/**'     # OmniStudio DataPacks (OmniScripts, DataRaptors, FlexCards)
+      - 'omnistudio/**'     # shared OmniStudio DataPacks (OmniScripts, DataRaptors, FlexCards)
   push:
     branches: [develop]
     paths:

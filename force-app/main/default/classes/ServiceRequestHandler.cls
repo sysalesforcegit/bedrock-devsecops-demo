@@ -13,7 +13,6 @@ public with sharing class ServiceRequestHandler {
             setDefaultStatus(sr);
         }
     }
-
     private static void setDefaultPriority(Service_Request__c sr) {
         if (String.isBlank(sr.Priority__c)) {
             if (sr.Category__c == 'IT Support') {
@@ -25,7 +24,6 @@ public with sharing class ServiceRequestHandler {
             }
         }
     }
-
     
     private static void setDefaultStatus(Service_Request__c sr) {
         if (String.isBlank(sr.Status__c)) {
